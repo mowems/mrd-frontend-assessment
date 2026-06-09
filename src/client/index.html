@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Candidate Test App</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Feel free to remove the welcome and demo blocks -->
+    <!-- Tip: see a solution demonstrated https://youtu.be/nluEqXetQLs  -->
+
+    <h1>Welcome to the candidate test app</h1>
+    <p>This is an Express.js app with TypeScript support!</p>
+    <button id="testBtn">Test API Call</button>
+    <div id="result"></div>
+
+    <hr>
+    <h2>Streaming Updates Demo</h2>
+    <button id="streamBtn">Start Stream</button>
+    <div id="streamStatus" style="margin-top: 1rem;">
+      <p><strong>Status:</strong> <span id="statusText">Ready</span></p>
+      <p><strong>Progress:</strong> <span id="progressText">-</span></p>
+      <p><strong>Conclusion:</strong> <span id="conclusionText">-</span></p>
+    </div>
+
+    <!-- TODO: create a grid to display restaurant details -->
+    <table>
+      <thead>
+        <tr>
+          <th><!-- Title --></th><!-- displays the restaurant name -->
+          <th><!-- Location --></th><!-- displays the province the restaurant is located in -->
+          <th><!-- Logo --></th><!-- display a small <img> -->
+          <th><!-- Sections --></th><!-- (Part 2: Bonus) display the number of sections each restaurant menu has -->
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Rows will be dynamically inserted and update -->
+      </tbody>
+
+    </table>
+    
+    
+
+  </div>
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+{
+  "name": "candidate-test",
+  "version": "1.0.0",
+  "description": "The web challenge of a candidate's journey to greatness.",
+  "main": "dist/server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "dev:client": "vite build --watch",
+    "dev:server": "nodemon --watch src/server --ext ts --exec tsx src/server/index.ts",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "vite build",
+    "build:server": "tsc -p src/server/tsconfig.json",
+    "start": "node dist/server/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.2.0",
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.11",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  }
+}
