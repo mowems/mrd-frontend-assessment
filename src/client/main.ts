@@ -222,6 +222,8 @@ function resetUi() {
   statusText.textContent = 'Ready';
   progressText.textContent = '-';
   conclusionText.textContent = '-';
+
+  tableBody.innerHTML = '';
 }
 
 function escapeHtml(value: string): string {
