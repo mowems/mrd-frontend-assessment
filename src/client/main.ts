@@ -1,43 +1,74 @@
-// Example client-side TypeScript code
 import './styles.css';
 
-interface ApiResponse {
-  message: string;
+interface BaseRestaurant {
+  id: number;
+  name: string;
+  suburb: string;
+  vertical: 'restaurant' | 'store';
 }
 
-interface StreamChunk {
-  type: 'progress' | 'conclusion'; // consider adding 'initial' and replacing 'progress' with 'details-update' and 'menu-update'
-  progress?: number;
-  conclusion?: string;
-  // add more fields here as needed for different chunk types
+interface RestaurantDetails {
+  id: number;
+  name: string;
+  vertical: 'restaurant' | 'store';
+  description: string;
+  address: {
+    suburb: string;
+    town: string;
+    province: string;
+  };
+  images?: {
+    restaurant_logo?: {
+      base_url: string;
+      filename: string;
+    };
+  };
 }
 
-const testBtn = document.getElementById('testBtn') as HTMLButtonElement;
-const resultDiv = document.getElementById('result') as HTMLDivElement;
+type StreamChunk =
+  | {
+      type: 'initial';
+      restaurants: BaseRestaurant[];
+      total: number;
+    }
+  | {
+      type: 'details-update';
+      restaurant: RestaurantDetails;
+    }
+  | {
+      type: 'restaurant-error';
+      id: number;
+      error: string;
+    }
+  | {
+      type: 'progress';
+      completed: number;
+      total: number;
+    }
+  | {
+      type: 'conclusion';
+      conclusion: string;
+    };
+
 const streamBtn = document.getElementById('streamBtn') as HTMLButtonElement;
 const statusText = document.getElementById('statusText') as HTMLSpanElement;
 const progressText = document.getElementById('progressText') as HTMLSpanElement;
 const conclusionText = document.getElementById('conclusionText') as HTMLSpanElement;
-
-testBtn?.addEventListener('click', async () => {
-  try {
-    const response = await fetch('/api/hello');
-    const data: ApiResponse = await response.json();
-    resultDiv.textContent = `API Response: ${data.message}`;
-  } catch (error) {
-    resultDiv.textContent = 'Error calling API';
-    console.error('Error:', error);
-  }
-});
+const tableBody = document.querySelector('tbody') as HTMLTableSectionElement;
 
 streamBtn?.addEventListener('click', async () => {
-  statusText.textContent = 'Streaming...';
-  progressText.textContent = '-';
-  conclusionText.textContent = '-';
+  resetUi();
+
+  statusText.textContent = 'Loading restaurants...';
   streamBtn.disabled = true;
 
   try {
-    const response = await fetch('/api/stream');
+    const response = await fetch('/api/restaurants/stream');
+
+    if (!response.ok) {
+      throw new Error(`Stream failed with status ${response.status}`);
+    }
+
     if (!response.body) {
       throw new Error('Response body is null');
     }
@@ -50,41 +81,151 @@ streamBtn?.addEventListener('click', async () => {
       const { done, value } = await reader.read();
       if (done) break;
 
-      // Decode the chunk and add to buffer
       buffer += decoder.decode(value, { stream: true });
 
-      // Split by newlines and process complete JSON objects
       const lines = buffer.split('\n');
-      buffer = lines[lines.length - 1]; // Keep incomplete line in buffer
+      buffer = lines[lines.length - 1];
 
       for (let i = 0; i < lines.length - 1; i++) {
         const line = lines[i].trim();
-        if (line) {
-          try {
-            const chunk: StreamChunk = JSON.parse(line);
-            chunkProcessor(chunk);
-          } catch (parseError) {
-            console.error('Failed to parse chunk:', line, parseError);
-          }
+
+        if (!line) continue;
+
+        try {
+          const chunk = JSON.parse(line) as StreamChunk;
+          processChunk(chunk);
+        } catch (error) {
+          console.error('Failed to parse stream chunk:', line, error);
         }
       }
     }
 
     statusText.textContent = 'Completed';
-    streamBtn.disabled = false;
   } catch (error) {
     statusText.textContent = 'Error';
+    conclusionText.textContent =
+      error instanceof Error ? error.message : 'Unknown streaming error';
     console.error('Streaming error:', error);
+  } finally {
     streamBtn.disabled = false;
   }
 });
 
-function chunkProcessor(chunk: StreamChunk) {
-  if (chunk.type === 'progress' && chunk.progress !== undefined) {
-    progressText.textContent = `${chunk.progress} updates received`;
-  } else if (chunk.type === 'conclusion' && chunk.conclusion) {
-    conclusionText.textContent = chunk.conclusion;
+function processChunk(chunk: StreamChunk) {
+  switch (chunk.type) {
+    case 'initial':
+      renderInitialRestaurants(chunk.restaurants);
+      progressText.textContent = `0 / ${chunk.total} loaded`;
+      conclusionText.textContent = '-';
+      break;
+
+    case 'details-update':
+      updateRestaurantRow(chunk.restaurant);
+      break;
+
+    case 'restaurant-error':
+      markRestaurantError(chunk.id, chunk.error);
+      break;
+
+    case 'progress':
+      progressText.textContent = `${chunk.completed} / ${chunk.total} loaded`;
+      break;
+
+    case 'conclusion':
+      conclusionText.textContent = chunk.conclusion;
+      break;
   }
 }
 
-console.log('Client-side TypeScript loaded successfully!');
+function renderInitialRestaurants(restaurants: BaseRestaurant[]) {
+  const rows = restaurants.map((restaurant) => {
+    return `
+      <tr id="restaurant-${restaurant.id}">
+        <td>
+          <strong>${escapeHtml(restaurant.name)}</strong>
+          <div class="muted">${escapeHtml(restaurant.vertical)}</div>
+        </td>
+        <td>${escapeHtml(restaurant.suburb)}</td>
+        <td class="logo-cell">Loading...</td>
+        <td class="status-cell">Fetching details...</td>
+      </tr>
+    `;
+  });
+
+  tableBody.innerHTML = rows.join('');
+}
+
+function updateRestaurantRow(restaurant: RestaurantDetails) {
+  const row = document.getElementById(`restaurant-${restaurant.id}`);
+
+  if (!row) return;
+
+  const locationCell = row.children[1];
+  const logoCell = row.children[2];
+  const statusCell = row.children[3];
+
+  locationCell.textContent = [
+    restaurant.address?.suburb,
+    restaurant.address?.town,
+    restaurant.address?.province,
+  ]
+    .filter(Boolean)
+    .join(', ');
+
+  logoCell.innerHTML = renderLogo(restaurant);
+  statusCell.innerHTML = `
+    <span class="status success">Loaded</span>
+    <div class="muted">${escapeHtml(restaurant.description || 'No description available')}</div>
+  `;
+}
+
+function markRestaurantError(id: number, error: string) {
+  const row = document.getElementById(`restaurant-${id}`);
+
+  if (!row) return;
+
+  const statusCell = row.children[3];
+  statusCell.innerHTML = `
+    <span class="status error">Failed</span>
+    <div class="muted">${escapeHtml(error)}</div>
+  `;
+}
+
+function renderLogo(restaurant: RestaurantDetails): string {
+  const logo = restaurant.images?.restaurant_logo;
+
+  if (!logo?.base_url || !logo?.filename) {
+    return '<span class="muted">No logo</span>';
+  }
+
+  const src = `${logo.base_url}${logo.filename}`;
+
+  return `<img class="restaurant-logo" src="${escapeAttribute(src)}" alt="${escapeAttribute(restaurant.name)} logo" />`;
+}
+
+function resetUi() {
+  tableBody.innerHTML = '';
+  statusText.textContent = 'Ready';
+  progressText.textContent = '-';
+  conclusionText.textContent = '-';
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => {
+    const entities: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;',
+    };
+
+    return entities[character];
+  });
+}
+
+function escapeAttribute(value: string): string {
+  return escapeHtml(value);
+}
+
+console.log('Restaurant loader client loaded successfully!');
