@@ -2,7 +2,7 @@
 
 Please commit this file with your name below. It is often not possible to accurately tell who the owner of a repository is. Please help us not attribute your great coding effort to a lesser candidate.
 
-**The name on your CV is [candidate name here]**
+**The name on your CV is David Unuigbe**
 
 ## Thank you
 
@@ -10,30 +10,36 @@ Thank you for taking the time to complete this take-home coding assignment.
 
 # Submission feedback
 
-_Please delete all the italic text. Your feedback is all we want. One liner answers are fine!_
-
 ## Planning
 
-_Did you take some time planning?_
+I spent some time understanding the existing streaming implementation and how the backend emitted progressive updates before deciding on the frontend rendering approach.
 
-_We'll be able to see from the commits in what order you chose to break down and solve the problem. Feel free to add any other insights we might miss._
+The challenge was clear overall, although I needed to inspect the stream format and understand the lifecycle of the restaurant updates before implementing the UI.
 
-_Was the challenge clear to you?_
+I did not immediately know the exact implementation details, but I knew I wanted the UI to progressively hydrate as restaurant data streamed in rather than waiting for the entire dataset to complete.
 
-_Did you immediately know how to solve the problem?_
-
-_After you understood the problem and before you started coding how did you feel about the time constraint?_
+Once I broke the problem into smaller parts — initial rendering, chunk processing, row updates, progress tracking, and error handling — the time constraint felt manageable.
 
 ## Coding
 
-_What was your biggest hurdle? Or where did you lose the most time?_
+The biggest hurdle was handling streamed chunk parsing safely and ensuring partially received chunks did not break the parser.
 
-_Are you happy with your solution? Does it "check all the boxes"?_
+Another area that took time was restructuring the UI so that progressive updates felt intentional and user-friendly instead of looking like raw debug output.
 
-_How much AI was used? If you really want you could just dump your prompts here too._
+I am happy with the final solution. It progressively renders restaurant data, updates rows incrementally, tracks progress in real time, and handles failures gracefully without interrupting the rest of the stream.
+
+The implementation also separates responsibilities into focused rendering and processing functions to keep the code maintainable.
+
+AI was used as a development assistant for discussing implementation approaches, reviewing architecture decisions, and refining UI/state management ideas. All final implementation and integration decisions were reviewed and adjusted manually.
 
 ## Wrap up
 
-_If you had another hour, what would you add or change?_
+With another hour, I would likely add:
 
+- retry functionality for failed restaurant requests
+- skeleton loading placeholders
+- additional responsive/mobile refinements
+- virtualization support for very large datasets
+- small animations for row hydration and status transitions
 
+Thank you again for the opportunity to complete the assignment.
