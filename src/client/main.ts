@@ -145,9 +145,17 @@ function renderInitialRestaurants(restaurants: BaseRestaurant[]) {
           <strong>${escapeHtml(restaurant.name)}</strong>
           <div class="muted">${escapeHtml(restaurant.vertical)}</div>
         </td>
+
         <td>${escapeHtml(restaurant.suburb)}</td>
-        <td class="logo-cell">Loading...</td>
-        <td class="status-cell">Fetching details...</td>
+
+        <td class="logo-cell">
+          <span class="muted">Loading...</span>
+        </td>
+
+        <td class="status-cell">
+          <span class="status loading">Loading</span>
+          <div class="muted">Fetching details...</div>
+        </td>
       </tr>
     `;
   });
@@ -184,7 +192,13 @@ function markRestaurantError(id: number, error: string) {
 
   if (!row) return;
 
+  const logoCell = row.children[2];
   const statusCell = row.children[3];
+
+  logoCell.innerHTML = `
+    <span class="muted">Unavailable</span>
+  `;
+
   statusCell.innerHTML = `
     <span class="status error">Failed</span>
     <div class="muted">${escapeHtml(error)}</div>

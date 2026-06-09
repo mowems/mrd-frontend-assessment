@@ -62,3 +62,8 @@ td {
   font-size: 0.85rem;
   margin-top: 4px;
 }
+
+.status.loading {
+  background: #eef2ff;
+  color: #3730a3;
+}
